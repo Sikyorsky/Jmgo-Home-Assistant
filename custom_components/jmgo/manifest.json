@@ -1,0 +1,13 @@
+{
+  "domain": "jmgo",
+  "name": "Jmgo Projector Remote",
+  "version": "v0.0.1",
+  "config_flow": true,
+  "integration_type": "device",
+  "documentation": "https://github.com/Sikyorsky/Jmgo-Home-Assistant",
+  "requirements": [],
+  "codeowners": [
+    "@Sikyorsky"
+  ],
+  "iot_class": "local_polling"
+}

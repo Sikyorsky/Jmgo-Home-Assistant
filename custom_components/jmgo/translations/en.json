@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure projector info",
+        "description": "Please make sure your projector turned on before trying to set it up.",
+        "data": {
+          "name": "projector Name",
+          "host": "projector Host",
+          "port": "projector port"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Invalid hostname or IP address",
+      "cannot_connect": "Failed to connect"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}

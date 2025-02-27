@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "JMGO Projector Remote",
+        "description": "在配置之前，请确保投影仪已经打开或者处于待机状态。",
+        "data": {
+          "name": "投影仪名称",
+          "host": "投影仪 IP",
+          "port": "投影仪port"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "IP错误",
+      "cannot_connect": "连接设备失败"
+    },
+    "abort": {
+      "already_configured": "该设备已经配置过"
+    }
+  }
+}
