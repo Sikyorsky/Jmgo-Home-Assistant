@@ -56,9 +56,9 @@ class XgimiRemote(RemoteEntity):
         self._icon = "mdi:projector"
         self._unique_id = unique_id
 
-    async def async_update(self):
+    def update(self):
         """Retrieve latest state."""
-        await self.xgimi_api.async_fetch_data()
+        self.xgimi_api.async_fetch_data()
 
 
 
@@ -84,19 +84,19 @@ class XgimiRemote(RemoteEntity):
         """Return an unique ID."""
         return self._unique_id
 
-    def async_turn_on(self, **kwargs):
+    def turn_on(self, **kwargs):
         """Turn the Xgimi Projector On."""
         # Do the turning on.
         self.xgimi_api.async_send_command("power")
 
-    def async_turn_off(self, **kwargs):
+    def turn_off(self, **kwargs):
         """Turn the Xgimi Projector Off."""
         # Do the turning off.
         self.xgimi_api.async_send_command("power")
 
     
 
-    def async_send_command(self, command: Iterable[str], **kwargs) -> None:
+    def send_command(self, command: Iterable[str], **kwargs) -> None:
         """Send a command to one of the devices."""
         for single_command in command:
              self.xgimi_api.async_send_command(single_command)
