@@ -1,10 +1,47 @@
 import socket
 from time import time,sleep
+import asyncio
 from collections.abc import Iterable
+
+import socket
+import re
+import sys
+
 
 import logging
 
 _LOGGER = logging.getLogger(__name__)
+
+def match_volume(data):
+    """方法A：直接匹配 volume 后的数字"""
+    volume_regex = r'volume["\s:]*(\d{1,3})'
+    match = re.search(volume_regex, data)
+    
+    if match:
+        return int(match.group(1))
+    
+    """方法B：查找独立字段的 volume（在 JSON 外的）
+       假设独立 volume 字段在前，格式为 "volume"+控制字符+数字"""
+    standalone_volume_regex = r'volume[\x00-\x1F](\d{1,3})'
+    standalone_match = re.search(standalone_volume_regex, data)
+    
+    if standalone_match:
+        return int(standalone_match.group(1))
+    
+    return None
+
+def match_power_state(data):
+    """匹配 power_state 后的单个数字"""
+    power_state_regex = r'power_state["\s:]*(\d)'
+    match = re.search(power_state_regex, data)
+    
+    if match:
+        return int(match.group(1))
+    
+    return None
+
+
+
 
 class Projector:
     # client = socket.socket()
@@ -41,24 +78,44 @@ class Projector:
         self._is_on = False
         self.last_on = time()
         self.last_off = time()
+        self.volume=0
+      
 
 
     @property
     def is_on(self) -> bool:
         """Return true if the device is on."""
         return self._is_on
+    
+    
 
-    async def async_fetch_data(self):
-        if time() - self.last_on < 30:
-            self._is_on = True
-        elif time() - self.last_off < 30:
-            self._is_on = False
-        else:
-            alive = await self.async_check_alive()
+    def async_fetch_data(self):
+            alive = self.async_check_alive()
             self._is_on = alive
 
-    async def async_check_alive(self):
-       return self.is_ip_reachable(self.host,9005)        
+    def async_check_alive(self):
+       
+    
+       try:
+          sock=socket.socket()
+          sock.connect((self.host,9005))
+          sock.send('Hello Server!'.encode('utf-8'))
+          data = sock.recv(32).decode('utf-8')
+          data1 = sock.recv(512).decode('latin-1')
+          sock.close()
+          cleaned_data = re.sub(r'[^\w\s]', '', data).strip()
+          self.volume = match_volume(cleaned_data)
+          power_state = match_power_state(data1)
+          if power_state==0:
+            return True
+          if power_state==3:
+            return False
+        
+       except ConnectionRefusedError:
+            return False
+       except Exception:
+            return False
+
 
        
  
@@ -78,9 +135,8 @@ class Projector:
     def exec(self, cmds):
         sock=socket.socket()
         sock.connect((self.host,9005))
-        for cmd in cmds: 
-            sock.send(cmd)
-            # sleep(0.1)
+        for cmd in cmds:
+         sock.send(cmd)
         sock.close()
 
     def power(self):
@@ -123,6 +179,11 @@ class Projector:
         cmds = self.commands["option"]
         self.exec(cmds)
 
+        
+
+   
+        
+
     def set_volume(self, volume):
         volume_hex = bytes(str(volume), 'utf-8')
         cmd = b""
@@ -137,7 +198,25 @@ class Projector:
             self.commands['volume_mid'][5] = volume_hex
             for b in self.commands['volume_mid']:
                 cmd += b
-        self.client.send(cmd)
+        sock=socket.socket()
+        sock.connect((self.host,9005))
+        sock.send(cmd)
+        sock.close()
+
+    def volup(self):
+        self.async_check_alive()
+        if self.volume<100:
+          self.volume+=1
+          self.set_volume(self.volume)
+
+    def voldown(self):
+        self.async_check_alive()
+        if self.volume>0:
+          self.volume-=1
+          self.set_volume(self.volume)
+
+    def mute(self):
+        self.set_volume(0)
 
 
 
@@ -146,9 +225,15 @@ class Projector:
 
     def async_send_command(self, command, **kwargs) -> None:
         """Send a command to one of the devices."""
-        
-        cmds = self.commands[command]
-        self.exec(cmds)
+        if command=='volup':
+            self.volup()
+        if command=='voldown':
+            self.voldown()
+        if command=='mute':
+            self.mute()
+        if command in self.commands:
+           cmds = self.commands[command]
+           self.exec(cmds)
 
 
 
